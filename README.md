@@ -35,6 +35,11 @@ Les fichiers :
 
 disposent de tests unitaires, ils peuvent être lancés en exécutant le programme directement.
 
+## 1.4. Améliorations possibles
+
+* Mettre en place un thread pour la mise à jour des données 
+* Gérer la possibilité d'arrêter la boucle ou d'effectuer des opération, par exemple consultation de données, ...
+
 # 2. Contexte du projet
 
 ## 2.1. Description
