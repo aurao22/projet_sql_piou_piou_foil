@@ -31,15 +31,18 @@ class Station:
             wind_speed_min (float): Minimum wind speed, or null (over the last 4 minutes before measurements.date, divide by 1.852 for converting to knots)
 
         Returns:
-            [boolean]: True si la mesure a bien été ajoutée, False si la dernière mesure était équivalente, donc cette mesure n'a pas été ajoutée
+            Mesure: la mesure a bien été ajoutée, False si la dernière mesure était équivalente, donc cette mesure n'a pas été ajoutée
         """
         if nouvelle_mesure is None:
             nouvelle_mesure = Mesure(date, wind_heading, wind_speed_avg, wind_speed_max, wind_speed_min, self)
-        
+        # Ajout de la mesure via l'accesseur
         self.mesures = nouvelle_mesure
-        if len(self._mesures) > 0 and self._mesures[-1].date != nouvelle_mesure.date:
-            if nouvelle_mesure == self._mesures[-1]:
-                nouvelle_mesure = self._mesures[-1]
+
+        # Récupération de la dernière mesure ajoutée, qui correspond soit à la mesure actuelle, soit l'équivalent précédémment ajoutée
+        if len(self._mesures) > 0:
+            nouvelle_mesure = self._mesures[-1]
+        else:
+            nouvelle_mesure = None
         return nouvelle_mesure
 
     @property
@@ -52,8 +55,8 @@ class Station:
             for mesure in mesures:
                 self.mesures(mesure)
         elif isinstance(mesures, Mesure):
-            # Pour limiter le nombre d'enregistrement
-            # Vérification que la dernière mesure n'est pas équivalente sans être à la même heure
+            # Pour limiter le nombre d'enregistrements
+            # Vérification que la dernière mesure identique (même si l'heure est différente)
             if len(self._mesures) > 0 and self._mesures[-1] != mesures:
                 if self._max_mesure > 0 and len(self._mesures) == self._max_mesure:
                         del self._mesures[0]
@@ -213,7 +216,6 @@ class GestionnaireDeStations:
     def stations(self, stations):
         if self._stations is None:
             self._stations = {}
-
         if isinstance(stations, Station):
             self._stations[stations.id] = stations
         elif isinstance(stations, list):
@@ -257,12 +259,13 @@ def test_station_mesure_constructeur(verbose=False):
         stations[valeurs[0]] = Station(valeurs[0], ville, valeurs[1], valeurs[2])
 
     assert len(stations) == len(stations_22)
-
+    print("Station > str")
     assert str(stations[334]) == "Champeaux (334), avec 0 mesures"
     assert str(stations[116]) == "Plérin (116), avec 0 mesures"
     assert str(stations[194]) == "Pordic (194), avec 0 mesures"
     # ajout des mesures
     # nouvelle_mesure=None, id=None, date=None, wind_heading=None, wind_speed_avg=None, wind_speed_max=None, wind_speed_min=None
+    print("Mesure > constucteur et Station > ajouter_mesure")
     mesure_334_0 = Mesure("2022-01-17T15:23:40.000Z", 202.5, 3, 5.25, 1, stations[334])
     mesure_334_0_b = stations[334].ajouter_mesure(nouvelle_mesure=mesure_334_0)
     assert mesure_334_0 == mesure_334_0_b
