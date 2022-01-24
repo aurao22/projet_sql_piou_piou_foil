@@ -25,22 +25,31 @@ BDD_NAME = 'my_piou_piou_raoul_aurelie.db'
 PP_URL_API_LIVE = "http://api.pioupiou.fr/v1/live/"
 TIMEOUT = 5 # nombre de seconde à attendre
 SLEEP_TIME =  30 # in secondes
-# Récupérer les stations de la bdd :
-gestionnaire = GestionnaireDeStations()
+
+MAX_MESURE_MOD_STATION = 'station'
+MAX_MESURE_MOD_ALL = 'all'
+
+max_mesure=10
+max_mesure_mod = MAX_MESURE_MOD_STATION
 
 curent_path = getcwd()+ "\\projet_sql_piou_piou_foil\\"
 
+# verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
 verbose = 1
+
+
+
 # ---------------------------------------------------------------------------------------------
 #                               FONCTIONS
 # ---------------------------------------------------------------------------------------------
 
-def station_information(url, id_station, verbose=False):
+def api_station_information(url, id_station, verbose=False):
     """Appelle l'API pour récupérer la mesure de la station reçue
 
     Args:
         url (str): url de l'API (sans l'id de la station)
-        station (Station): Station à mettre à jour
+        id_station (int): identifiant de la station
+        verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
 
     Raises:
         Exception: En cas d'incohérence entre les donnes reçues et la station
@@ -75,12 +84,13 @@ def station_information(url, id_station, verbose=False):
     return nouvelle_station
 
 
-def mesure_courante_pour_la_station(url, station, verbose=False):
+def api_mesure_courante_pour_la_station(url, station, verbose=False):
     """Appelle l'API pour récupérer la mesure de la station reçue
 
     Args:
         url (str): url de l'API (sans l'id de la station)
         station (Station): Station à mettre à jour
+        verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
 
     Raises:
         Exception: En cas d'incohérence entre les donnes reçues et la station
@@ -126,50 +136,76 @@ def mesure_courante_pour_la_station(url, station, verbose=False):
             resp.raise_for_status()
     return mesure
    
+def api_recuperer_mesures(url, gestionnaire, verbose=False):
+    """[summary]
 
-def synchroniser_bdd(gestionnaire, ma_dao, verbose=False):
+    Args:
+        url ([type]): [description]
+        gestionnaire ([type]): [description]
+        verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """
+
+    mesures = []
     stations = gestionnaire.stations
     # Récupéreration des mesures pour chaque station
     for station in stations.values():
-        
-        # Vérifier si les mesures en BDD sont différentes ou non
-        for mesure in station.mesures:
-            # id_station=None, mesure_date=None, wind_heading=None, wind_speed_avg=None, wind_speed_min=None,wind_speed_max=None
-            dao_mesure_list = ma_dao.select_mesures(station=mesure.station, mesure_date=mesure.date, wind_heading=mesure.wind_heading, wind_speed_avg=mesure.wind_speed_avg, wind_speed_min=mesure.wind_speed_min,wind_speed_max=mesure.wind_speed_max, verbose=verbose)
-            if dao_mesure_list is not None and len(dao_mesure_list)>0:
-                pass
-            else:
-                # Sauvegarder en BDD
-                ma_dao.ajouter_mesure(mesure, verbose)
-
-
-def recuperer_mesures(url, gestionnaire, verbose=False):
-
-    mesures_ajoutees = []
-    stations = gestionnaire.stations
-    # Récupéreration des mesures pour chaque station
-    for station in stations.values():
-        mesure = mesure_courante_pour_la_station(url, station, verbose)
-
+        mesure = api_mesure_courante_pour_la_station(url, station, verbose)
         if mesure is not None:
-            nouvelle_mesure = station.ajouter_mesure(mesure)
+            mesures.append(mesure)
             
-    return mesures_ajoutees
+    return mesures
+
+def dao_ajouter_mesures_bdd(mesures, ma_dao, verbose=False):
+    """Vérifie et au besoin ajoute en BDD les mesures en mémoire qui ne sont pas encore en BDD
+
+    Args:
+        mesures (List[Mesure]): mesures à ajouter
+        ma_dao (PiouPiouDao): dao
+        verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
+    """
+    # Vérifier si les mesures en BDD sont différentes ou non
+    for mesure in mesures:
+        # id_station=None, mesure_date=None, wind_heading=None, wind_speed_avg=None, wind_speed_min=None,wind_speed_max=None
+        dao_mesure_list = ma_dao.select_mesures(station=mesure.station, mesure_date=mesure.date, wind_heading=mesure.wind_heading, wind_speed_avg=mesure.wind_speed_avg, wind_speed_min=mesure.wind_speed_min,wind_speed_max=mesure.wind_speed_max, verbose=verbose)
+        if dao_mesure_list is not None and len(dao_mesure_list)>0:
+            pass
+        else:
+            # Sauvegarder en BDD
+            ma_dao.ajouter_mesure(mesure, verbose)
 
 
+def dao_synchroniser_bdd(gestionnaire, ma_dao, verbose=False):
+    """Rafraîchit les mesures de chaque station par rapport à ce qui est en BDD
+
+    Args:
+        gestionnaire (GestionnaireDeStations): gestionnaire des stations
+        ma_dao (PiouPiouDao): dao
+        verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
+    """
+    stations = gestionnaire.stations
+    # Récupéreration des mesures pour chaque station
+    for station in stations.values():
+        # pour être sûre d'avoir les mêmes données qu'en BDD, on remplace les données en mémoire par les données de la BDD        
+        station.mesures = ma_dao.select_mesures(station=station, verbose=verbose)
 
 # ---------------------------------------------------------------------------------------------
 #                               MAIN
 # ---------------------------------------------------------------------------------------------
 
+gestionnaire = GestionnaireDeStations()
 ma_dao = PiouPiouDao(curent_path+BDD_NAME)
+
 if ma_dao.initialiser_bdd(verbose=verbose):
+
     nb_stations = ma_dao.nombre_stations(verbose=verbose)
     if nb_stations == 0:
         # Création des stations en BDD
         for id in stations_proche_nantes.values():  
-            # TODO : récupérer les informations de la station via l'API
-            station = station_information(PP_URL_API_LIVE, id, verbose)
+            # Récupérer les informations de la station via l'API
+            station = api_station_information(PP_URL_API_LIVE, id, verbose)
             if station is not None:
                 res = ma_dao.ajouter_station(station)
                 if res != id:
@@ -186,14 +222,17 @@ if ma_dao.initialiser_bdd(verbose=verbose):
     if station_list is not None:
         # Ajout de la nouvelle station dans le gestionnaire
         gestionnaire.stations = station_list
-        
+  
+    # Initialisation des mesures
+    dao_synchroniser_bdd(gestionnaire, ma_dao, verbose)
     
     # Boucler pour mise à jour régulière
     sortie = False    
     while not sortie:
          # Récupéreration des mesures pour chaque station
-        mesures_ajoutees = recuperer_mesures(PP_URL_API_LIVE, gestionnaire, verbose)
-        synchroniser_bdd(gestionnaire, ma_dao, verbose)
+        mesures_ajoutees = api_recuperer_mesures(PP_URL_API_LIVE, gestionnaire, verbose)
+        dao_ajouter_mesures_bdd(mesures_ajoutees, ma_dao, verbose)
+        dao_synchroniser_bdd(gestionnaire, ma_dao, verbose)
         time.sleep(SLEEP_TIME)
 
     print(f"---------------------- END ----------------------")
