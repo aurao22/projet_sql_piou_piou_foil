@@ -15,8 +15,10 @@ par Aurélie RAOUL
 
 ## Lancement
 
-Le programme doit être lancé via le script : ```piou_piou_raoul_aurelie_controller.py```
-Une fois lancé, il faut utiliser ```CTRL + Z``` pour l'arrêter
+Le programme doit être lancé via le script : ```piou_piou_raoul_aurelie_controller.py```    
+Une fois lancé, il faut utiliser ```CTRL + Z``` pour l'arrêter   
+
+Si la BDD n'existe pas, le programme créera la BDD dans le répertoire d'exécution, il possible de modifier l'emplacement dans le controller
 
 ## Contexte du projet
 
