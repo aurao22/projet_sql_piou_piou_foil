@@ -46,6 +46,9 @@ class Station:
             nouvelle_mesure = None
         return nouvelle_mesure
 
+    def nb_mesures(self):
+        return len(self._mesures)
+
     @property
     def mesures(self):
         return self._mesures.copy()
@@ -53,6 +56,7 @@ class Station:
     @mesures.setter
     def mesures(self, mesures):
         if isinstance(mesures, list):
+            self._mesures = []
             for mesure in mesures:
                 self.mesures(mesure)
         elif isinstance(mesures, Mesure):
@@ -69,7 +73,7 @@ class Station:
                     print("Cette mesure est égale au dernier enregistrement")
         else:
             raise TypeError(f"Un objet de type Mesure est attendu et non {type(mesures)}")
-    
+ 
     def __repr__(self):
         return str(self)
     
@@ -84,7 +88,7 @@ class Station:
     
 
 class Mesure:
-    def __init__(self, date, wind_heading, wind_speed_avg, wind_speed_max, wind_speed_min, station):
+    def __init__(self, date, wind_heading, wind_speed_avg, wind_speed_max, wind_speed_min, station, id=None):
         """
         Args:
             date (str): Date of last measurements, or null
@@ -102,6 +106,7 @@ class Mesure:
         self._station = None
         if station is not None:
             self.station = station
+        self.id = id
 
     @property
     def station(self):
@@ -241,6 +246,28 @@ class GestionnaireDeStations:
         # Sans critère on retourne la liste des stations
         else:
             return self._stations.copy()
+
+    def ajouter_mesure(self, station, nouvelle_mesure):
+         
+        if station is not None and nouvelle_mesure is not None:
+            if isinstance(station, int):
+                station = self.station(station)
+            
+            if station is None or not isinstance(station, Station):
+                raise TypeError(f"Un objet de type Station est attendu et non {type(station)}")
+            
+            if isinstance(nouvelle_mesure, Mesure):                       
+                nouvelle_mesure = station.ajouter_mesure(nouvelle_mesure)
+            else:
+                raise TypeError(f"Un objet de type Mesure est attendu et non {type(nouvelle_mesure)}")
+        else:
+            if station is None:
+                raise ValueError(f"Un objet de type Station est attendus (None reçu)")
+            else:
+                raise ValueError(f"Un objet de type Mesuse est attendus (None reçu)")
+        return nouvelle_mesure
+            
+                
     
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

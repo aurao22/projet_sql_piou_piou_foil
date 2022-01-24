@@ -197,7 +197,8 @@ class PiouPiouDao:
                     # on supprime la mesure la plus ancienne pour garder uniquement les 10 dernières mesures
                     self._executer_sql(f"DELETE FROM mesure WHERE id = (SELECT MIN(id) FROM mesure{sql_end});", verbose=verbose)
                 res = self._executer_sql(f"INSERT INTO mesure (id, mesure_date, wind_heading, wind_speed_avg, wind_speed_max, wind_speed_min, station) VALUES (NULL,'{mesure.date}',{mesure.wind_heading}, {mesure.wind_speed_avg}, {mesure.wind_speed_max}, {mesure.wind_speed_min},  {mesure.station.id});", verbose=verbose)
-                
+                # Mise à jour de l'id de la mesure
+                mesure.id = res
             elif isinstance(mesure, list):
                 res = []
                 try:
@@ -502,7 +503,7 @@ if __name__ == "__main__":
 
     # suppression du fichier s'il existe déjà (sinon les tests seront failed)
     _remove_file(test_file_bdd)
-        
+      
     ma_dao2 = PiouPiouDao(test_file_bdd, max_mesure_mod=PiouPiouDao.MAX_MESURE_MOD_ALL)
     assert ma_dao2.test_connexion(verbose=verbose)
     res = ma_dao2.liste_tables(verbose=verbose)
