@@ -20,7 +20,11 @@ par Aurélie RAOUL
 Le programme doit être lancé via le script : ```piou_piou_raoul_aurelie_controller.py```    
 Une fois lancé, il faut utiliser ```CTRL + Z``` pour l'arrêter   
 
-Si la BDD n'existe pas, le programme créera la BDD dans le répertoire d'exécution, il possible de modifier l'emplacement dans le controller
+> **NOTE 1** Si la BDD n'existe pas, le programme créera la BDD dans le répertoire d'exécution, il possible de modifier l'emplacement dans le controller.
+
+
+> **NOTE 2** Pour limiter les données enregistrée, le programme sauvegarde les mesures différentes uniquement, c'est-à-dire que si les 2 (ou plus) dernières mesures sont identiques pour une station, seule la première est sauvegardée, jusqu'au changement de mesure.
+
 
 ## 1.3. Test unitaire du programme
 
