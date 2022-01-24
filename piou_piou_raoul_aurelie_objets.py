@@ -58,7 +58,7 @@ class Station:
         if isinstance(mesures, list):
             self._mesures = []
             for mesure in mesures:
-                self.mesures(mesure)
+                self.mesures =  mesure 
         elif isinstance(mesures, Mesure):
             # Pour limiter le nombre d'enregistrements
             # Vérification que la dernière mesure identique (même si l'heure est différente)
