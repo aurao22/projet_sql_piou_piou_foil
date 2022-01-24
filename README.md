@@ -10,6 +10,7 @@ par Aurélie RAOUL
 * ---
 * ```my_piou_piou_raoul_aurelie.db``` : base de données du programme, en cas d'absence de ce fichier, le programme créera automatiquement le fichier et la base de données
 * ```my_piou_piou_raoul_aurelie.backup.db``` : Back-up de la base de données, en cas d'absence de ce fichier, le programme le créera automatiquement
+* ```my_piou_piou_bdd_script.sql``` : Le script SQL de création de la BDD, non nécessaire car intégré dans le programme
 
 
 ## Lancement
