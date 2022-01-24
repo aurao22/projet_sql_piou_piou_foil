@@ -170,3 +170,13 @@ HTTP/1.1 404 Not Found
 |-----------------|----------|--------------------------------------------|
 |station_not_found| 	404 	 |The requested station is not in the database|
 |missing_argument | 	400 	 |The station ID is missing or invalid        |
+
+# 3. Représentation des données
+
+## 3.1. Réprésentation générale
+
+![Réprésentation générale](https://github.com/aurao22/projet_sql_piou_piou_foil/blob/master/schema_pioupiou_full.png)
+
+## 3.2. Sélection des données nécessaires pour le programme
+
+![Données sélectionnées](https://github.com/aurao22/projet_sql_piou_piou_foil/blob/master/schema_pioupiou_selected.png)
