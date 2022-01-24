@@ -5,13 +5,20 @@ from piou_piou_raoul_aurelie_objets import *
 
 
 class PiouPiouDao:
+    """Traite tout ce qui concerne la base de données
+    """
+    MAX_MESURE_MOD_STATION = 'station'
+    MAX_MESURE_MOD_ALL = 'all'
 
-    def __init__(self, nom_bdd, backup_path=None, frequence_backup=5, max_mesure=10):
-        """[summary]
+    def __init__(self, nom_bdd, backup_path=None, frequence_backup=5, max_mesure=10, max_mesure_mod=MAX_MESURE_MOD_STATION):
+        """Constructeur
 
         Args:
             nom_bdd (str): Chemin complet de la bdd
+            backup_path (str, optional): Chemin complet pour le backup de la bdd. Defaults to None, le nom sera le même que celui de la BDD mais avec .backup.db.
             frequence_backup (int, optional): Fréquence de backup de la BDD. Defaults to 5.
+            max_mesure (int, optional): Nombre maximum de mesures à sauvegarder en BDD. Defaults to 10.
+            max_mesure_mod (str, optional) : mode de gestion du maximum de mesure ('station','all')
         """
         self.nom_bdd = nom_bdd
         self.frequence_backup = frequence_backup
@@ -20,9 +27,20 @@ class PiouPiouDao:
             backup_path = self.nom_bdd.replace(".db", ".backup.db")
         self.backup_path = backup_path
         self.max_mesure = max_mesure
+        self.max_mesure_mode = max_mesure_mod
 
 
     def connecter(self, verbose=False):
+        """Connecte la base de données
+        Args:
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
+
+        Raises:
+            error: En cas de problème établir la connexion à la BDD
+
+        Returns:
+            Connection: la connexion ouverte
+        """
         conn = None
         try:
             conn = sqlite3.connect(self.nom_bdd)
@@ -39,6 +57,14 @@ class PiouPiouDao:
 
 
     def test_connexion(self, verbose=False):
+        """Teste la connexion à la BDD
+
+        Args:
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
+
+        Returns:
+            bool: True si le test a fonctionné, False sinon
+        """
         try:
             sql = "SELECT sqlite_version();"       
             res = self._executer_sql(sql, verbose)
@@ -49,9 +75,10 @@ class PiouPiouDao:
             return False
 
     def liste_tables(self, verbose=False):
-        """
+        """ Liste les tables existants dans la BDD
+
         Args:
-            verbose (bool, optional): [description]. Defaults to False.
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
 
         Returns:
             List: Retourne la liste des tables créées dans la BDD
@@ -63,24 +90,61 @@ class PiouPiouDao:
         return tables_name
 
     def nombre_stations(self, verbose=False):
+        """Compte le nombre de stations existantes en BDD
+
+        Args:
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
+
+        Returns:
+            int: le nombre de stations existantes en BDD
+        """
         res = self._executer_sql("SELECT count(*) FROM station;", verbose=verbose)
         if verbose:
             print(res[0][0])
         # on retourne la 1ère valeur de la 1ère ligne
         return res[0][0]
 
-    def nombre_mesures(self, verbose=False):
-        res = self._executer_sql("SELECT count(*) FROM mesure;", verbose=verbose)
+    def nombre_mesures(self, station=None, verbose=False):
+        """Compte le nombre de mesures en BDD, si aucun identifiant de station n'est précisé, renvois le nombre total de mesure, sinon le nombre de mesure pour la station.
+
+        Args:
+            station (Station/int, optional) : Identifiant de la station pour laquelle nous souhaitons des mesures. Default None
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
+
+        Returns:
+            int: le nombre de mesures en BDD
+        """
+        sql = "SELECT count(*) FROM mesure"
+        if station is not None:
+            if isinstance(station, Station):
+                sql += f" WHERE station = {station.id}" 
+            elif isinstance(station, int):
+                sql += f" WHERE station = {station}"
+        res = self._executer_sql(sql+";", verbose=verbose)
         if verbose:
             print(res[0][0])
         # on retourne la 1ère valeur de la 1ère ligne
         return res[0][0]
 
     def ajouter_station(self, station, verbose=False):
+        """Ajoute une station en BDD, si elle n'existe pas déjà en BDD
+
+        Args:
+            station (Station/list[Station]/dict{-:Station}): Station à ajouter
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
+
+        Raises:
+            TypeError: Lorsque la station n'est pas de type :Station ou list[Station] ou dict{-:Station}
+            ValueError: Lorsque la station vaut None
+
+        Returns:
+            (int / List[int]): Identifiant des stations ajoutées
+        """
         res = None
         if station is not None:
             if isinstance(station, Station):
-                res = self._executer_sql(f"INSERT INTO station (id, station_name, latitude, longitude) VALUES ({station.id},'{station.name}',{station.latitude}, {station.longitude});", verbose=verbose)
+                # INSERT OR IGNORE pour éviter des doublons, logiquement devrait éviter d'avoir l'exception IntegrityError
+                res = self._executer_sql(f"INSERT OR IGNORE INTO station (id, station_name, latitude, longitude) VALUES ({station.id},'{station.name}',{station.latitude}, {station.longitude});", verbose=verbose)
             elif isinstance(station, list):
                 res = []
                 try:
@@ -104,13 +168,34 @@ class PiouPiouDao:
         return res
 
     def ajouter_mesure(self, mesure, verbose=False):
+        """Ajoute une mesure en BDD, si elle n'existe pas déjà en BDD
+        Si la
+
+        Args:
+            mesure (Mesure/list[Mesure]/dict{-:Mesure}): Mesure à ajouter
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False
+
+        Raises:
+            TypeError: Lorsque la mesure n'est pas de type : Mesure ou list[Mesure] ou dict{-:Mesure}
+            ValueError: Lorsque la mesure vaut None
+        Returns:
+            (int / List[int]): Identifiant des mesures ajoutées
+        """
         res = None
         if mesure is not None:
             if isinstance(mesure, Mesure):
-                nb_mesure = self.nombre_mesures(verbose)
-                if nb_mesure == self.max_mesure:
+                nb_mesure = 0
+                sql_end = ""
+                if PiouPiouDao.MAX_MESURE_MOD_STATION in self.max_mesure_mode:
+                    id_station = mesure.station.id
+                    nb_mesure = self.nombre_mesures(station=id_station, verbose=verbose)
+                    sql_end = f" WHERE station={id_station}"
+                elif  PiouPiouDao.MAX_MESURE_MOD_ALL in self.max_mesure_mode:
+                    nb_mesure = self.nombre_mesures(verbose=verbose)
+
+                if nb_mesure > 0 and nb_mesure == self.max_mesure:
                     # on supprime la mesure la plus ancienne pour garder uniquement les 10 dernières mesures
-                    self._executer_sql(f"DELETE FROM mesure WHERE id = (SELECT MIN(id) FROM mesure);", verbose=verbose)
+                    self._executer_sql(f"DELETE FROM mesure WHERE id = (SELECT MIN(id) FROM mesure{sql_end});", verbose=verbose)
                 res = self._executer_sql(f"INSERT INTO mesure (id, mesure_date, wind_heading, wind_speed_avg, wind_speed_max, wind_speed_min, station) VALUES (NULL,'{mesure.date}',{mesure.wind_heading}, {mesure.wind_speed_avg}, {mesure.wind_speed_max}, {mesure.wind_speed_min},  {mesure.station.id});", verbose=verbose)
                 
             elif isinstance(mesure, list):
@@ -136,6 +221,14 @@ class PiouPiouDao:
         return res
 
     def stations(self, verbose=False):
+        """Retourne la liste des stations en BDD
+
+        Args:
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False
+
+        Returns:
+            List[Station]: Retourne la liste des stations en BDD
+        """
         res = self._executer_sql(f"SELECT id, station_name, latitude, longitude FROM station ORDER BY id;", verbose=verbose)
         stations_list = []
         for row in res:
@@ -144,6 +237,15 @@ class PiouPiouDao:
         return stations_list
 
     def mesures(self, station=None, verbose=False):
+        """Retourne la liste des mesures
+
+        Args:
+            station (Station, optional): Station pour laquelle on souhaite les mesures. Defaults to None, retourne toutes les mesures pour toutes les stations.
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False
+
+        Returns:
+            List[Mesures]: Liste des mesures
+        """
 
         sql = ""
         if station is not None and isinstance(station, Station):
@@ -162,6 +264,21 @@ class PiouPiouDao:
 
 
     def select_mesures(self, station=None, mesure_date=None, wind_heading=None, wind_speed_avg=None, wind_speed_min=None,wind_speed_max=None, id_mesure=None, verbose=False):
+        """Recherche les mesures correspondants aux critères reçus
+
+        Args:
+            station (Station, optional): Station pour laquelle on souhaite les mesures. Defaults to None.
+            mesure_date (str, optional): Date de la mesure. Defaults to None.
+            wind_heading (float, optional): heading. Defaults to None.
+            wind_speed_avg (float, optional): avg. Defaults to None.
+            wind_speed_min (float, optional): min. Defaults to None.
+            wind_speed_max (float, optional): max. Defaults to None.
+            id_mesure (int, optional): identifiant de la mesure. Defaults to None.
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False
+
+        Returns:
+            List[Mesure]: Liste des mesures correspondants aux paramètres
+        """
 
         nb_param = 0
 
@@ -221,7 +338,7 @@ class PiouPiouDao:
 
         Args:
             drop_if_exist (bool, optional): Pour supprimer les tables si elles existent déjà /!\ Suppression des données. Defaults to False.
-            verbose (bool, optional): [description]. Defaults to False.
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False
 
         Returns:
             bool: Si les tables existent dans la BDD ou non
@@ -244,7 +361,7 @@ class PiouPiouDao:
 
         Args:
             file_path (str): Chemin complet avec nom du fichier de la sauvegarde
-            verbose (bool, optional): [description]. Defaults to False.
+            verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False
 
         Returns:
             boolean: True si fichier de sauvegarde créé, False sinon
@@ -309,6 +426,12 @@ class PiouPiouDao:
                 conn.commit()
                 if "INSERT" in sql:
                     res = cur.lastrowid
+                else:
+                    res = cur.fetchall()
+
+                # On compte tous les changements de données (stucture de BDD, insertion de données ou suppression)
+                # on ne peut pas mettre "SELECT" not in sql car en cas de requête imbriquée, elle ne serait pas comptée
+                if "INSERT" in sql or "UPDATE" in sql or "CREATE" in sql or "DROP" in sql or "DELETE" in sql:
                     self._nb_enregistrement += 1
                     if self.frequence_backup > 0 and self._nb_enregistrement >= self.frequence_backup :
                         if self.backup_path is not None:
@@ -316,8 +439,6 @@ class PiouPiouDao:
                                 self._nb_enregistrement = 0
                         else:
                             print("Impossible de sauvegarder, backup_path vide")
-                else:
-                    res = cur.fetchall()
                 if verbose:
                     print(" =>",res)
             except sqlite3.Error as error:
@@ -340,7 +461,18 @@ class PiouPiouDao:
             except Exception:
                 pass       
         return res
-        
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#                                              TESTS
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def _remove_file(file_path):
+    try:
+        if path.exists(file_path):
+            remove(file_path)
+    except OSError as e:
+        print(e)
+   
 
 if __name__ == "__main__":
 
@@ -349,7 +481,10 @@ if __name__ == "__main__":
     curent_path = getcwd()+ "\\projet_sql_piou_piou_foil\\"
     print(curent_path)
 
-    ma_dao = PiouPiouDao(curent_path+'my_piou_piou_raoul_aurelie.db')
+    test_file_bdd = curent_path+'bdd_test.db'
+    test_file_bdd_save = curent_path+"bdd_test_sauvegarde.db"
+
+    ma_dao = PiouPiouDao(test_file_bdd)
     assert ma_dao.test_connexion(verbose=verbose)
     # Création avec une BDD vide
     assert ma_dao.initialiser_bdd(verbose=verbose)
@@ -363,17 +498,12 @@ if __name__ == "__main__":
     print(res)
     assert res is not None
 
-    assert ma_dao.creer_sauvegarde(curent_path+"my_piou_sauvegarde.db", verbose=verbose)
+    assert ma_dao.creer_sauvegarde(test_file_bdd_save, verbose=verbose)
 
     # suppression du fichier s'il existe déjà (sinon les tests seront failed)
-    bdd_test_path = curent_path+'bdd_test_to_remove.db'
-    try:
-        if path.exists(bdd_test_path):
-            remove(bdd_test_path)
-    except OSError as e:
-        print(e)
-    
-    ma_dao2 = PiouPiouDao(bdd_test_path)
+    _remove_file(test_file_bdd)
+        
+    ma_dao2 = PiouPiouDao(test_file_bdd, max_mesure_mod=PiouPiouDao.MAX_MESURE_MOD_ALL)
     assert ma_dao2.test_connexion(verbose=verbose)
     res = ma_dao2.liste_tables(verbose=verbose)
     print("liste des tables:",res)
@@ -410,7 +540,7 @@ if __name__ == "__main__":
     res = ma_dao2.ajouter_station(list(list_stations.values()), verbose=verbose)
     print("Max station added :",max(res))
     assert max(res) == 194
-    assert len(res) == 2
+    assert len(res) == 3
 
     stations = ma_dao2.stations(verbose=verbose)
     print("Stations:",res)
@@ -427,6 +557,14 @@ if __name__ == "__main__":
         mesures_list.extend(s.mesures)
     
     nb_mesures = ma_dao2.nombre_mesures(verbose=verbose)
+
+    nb_mesures_334_1 = ma_dao2.nombre_mesures(station=334, verbose=verbose)
+    assert nb_mesures_334_1 > 0
+
+    nb_mesures_334_2 = ma_dao2.nombre_mesures(list_stations[334], verbose=verbose)
+    assert nb_mesures_334_2 > 0
+    assert nb_mesures_334_1 == nb_mesures_334_2
+
     # Tester la suppression des mesures les plus anciennes
     i = 0.5
     while nb_mesures < 10:
@@ -435,6 +573,26 @@ if __name__ == "__main__":
             res = ma_dao2.ajouter_mesure(m2, verbose=verbose)
         i += .5
         nb_mesures = ma_dao2.nombre_mesures(verbose=verbose)
+
+    # Test ajouter mesure en mode par station
+    ma_dao2.max_mesure_mode = PiouPiouDao.MAX_MESURE_MOD_STATION
+
+    # Tester la suppression des mesures les plus anciennes
+    i = 0.5
+    nb_mesures = 0
+    while nb_mesures < 10:
+        for m in mesures_list:
+            m2 = Mesure(m.date, m.wind_heading+i, m.wind_speed_avg+i, m.wind_speed_max+i, m.wind_speed_min+i, m.station)
+            res = ma_dao2.ajouter_mesure(m2, verbose=verbose)
+        i += .5
+        nb_mesures = ma_dao2.nombre_mesures(station=m.station, verbose=verbose)
+
+
+    # Suppression des fichiers de tests
+    _remove_file(test_file_bdd)
+    _remove_file(test_file_bdd.replace(".db", ".backup.db"))
+    _remove_file(test_file_bdd_save)
+
     
 
 
