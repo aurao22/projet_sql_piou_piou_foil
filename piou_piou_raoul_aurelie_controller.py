@@ -145,7 +145,7 @@ def api_recuperer_mesures(url, gestionnaire, verbose=False):
         verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
 
     Returns:
-        [type]: [description]
+        List[Mesures]: Liste des mesures récupérées
     """
 
     mesures = []
