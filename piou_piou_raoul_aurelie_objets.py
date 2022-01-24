@@ -1,6 +1,7 @@
 class Station:
     """Représente une station PiouPiou
     """
+    # verbose (bool/int, optional): Niveau de détail pour les traces. Defaults to False.
     verbose = False
 
     def __init__(self, id, name, latitude=None, longitude=None, max_mesure = -1):
