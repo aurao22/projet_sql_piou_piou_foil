@@ -1,5 +1,4 @@
 import requests
-import signal
 from piou_piou_raoul_aurelie_dao import *
 from piou_piou_raoul_aurelie_objets import *
 from datetime import datetime
@@ -162,8 +161,6 @@ def recuperer_mesures(url, gestionnaire, verbose=False):
 # ---------------------------------------------------------------------------------------------
 #                               MAIN
 # ---------------------------------------------------------------------------------------------
-
-
 
 ma_dao = PiouPiouDao(curent_path+BDD_NAME)
 if ma_dao.initialiser_bdd(verbose=verbose):

@@ -143,11 +143,11 @@ class PiouPiouDao:
             stations_list.append(station)
         return stations_list
 
-    def mesures(self, id_station=None, verbose=False):
+    def mesures(self, station=None, verbose=False):
 
         sql = ""
-        if id_station is not None and isinstance(id_station, int):
-            sql = f"SELECT id, mesure_date, wind_heading, wind_speed_avg, wind_speed_min, wind_speed_max, station FROM mesure WHERE station = {id_station} ORDER BY id;"
+        if station is not None and isinstance(station, Station):
+            sql = f"SELECT id, mesure_date, wind_heading, wind_speed_avg, wind_speed_min, wind_speed_max, station FROM mesure WHERE station = {station.id} ORDER BY id;"
         else:
             sql = f"SELECT id, mesure_date, wind_heading, wind_speed_avg, wind_speed_min, wind_speed_max, station FROM mesure ORDER BY station, id;"
 
@@ -155,7 +155,7 @@ class PiouPiouDao:
         mesures_list = []
         for row in res:
             # date, wind_heading, wind_speed_avg, wind_speed_max, wind_speed_min, station
-            mesure = Mesure(date=row[1],wind_heading=row[2], wind_speed_avg=row[3], wind_speed_max=row[5], wind_speed_min=row[4])
+            mesure = Mesure(date=row[1],wind_heading=row[2], wind_speed_avg=row[3], wind_speed_max=row[5], wind_speed_min=row[4], station=station)
             mesures_list.append(mesure)
 
         return mesures_list
@@ -346,7 +346,7 @@ if __name__ == "__main__":
 
     verbose = 1
     # Récupère le répertoire du programme
-    curent_path = getcwd()+ "\\simplon\\projets\\projet_sql\\"
+    curent_path = getcwd()+ "\\projet_sql_piou_piou_foil\\"
     print(curent_path)
 
     ma_dao = PiouPiouDao(curent_path+'my_piou_piou_raoul_aurelie.db')

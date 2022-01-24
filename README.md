@@ -12,7 +12,7 @@ par Aurélie RAOUL
 * ---
 * ```my_piou_piou_raoul_aurelie.db``` : base de données du programme, en cas d'absence de ce fichier, le programme créera automatiquement le fichier et la base de données
 * ```my_piou_piou_raoul_aurelie.backup.db``` : Back-up de la base de données, en cas d'absence de ce fichier, le programme le créera automatiquement
-* ```my_piou_piou_bdd_script.sql``` : Le script SQL de création de la BDD, non nécessaire car intégré dans le programme
+* ```piou_piou_bdd_script.sql``` : Le script SQL de création de la BDD, non nécessaire car intégré dans le programme
 
 
 ## 1.2. Lancement
@@ -21,6 +21,15 @@ Le programme doit être lancé via le script : ```piou_piou_raoul_aurelie_contro
 Une fois lancé, il faut utiliser ```CTRL + Z``` pour l'arrêter   
 
 Si la BDD n'existe pas, le programme créera la BDD dans le répertoire d'exécution, il possible de modifier l'emplacement dans le controller
+
+## 1.3. Test unitaire du programme
+
+Les fichiers :
+
+* ```piou_piou_raoul_aurelie_objets.py```
+* ```piou_piou_raoul_aurelie_dao.py```
+
+disposent de tests unitaires, ils peuvent être lancés en exécutant le programme directement.
 
 # 2. Contexte du projet
 

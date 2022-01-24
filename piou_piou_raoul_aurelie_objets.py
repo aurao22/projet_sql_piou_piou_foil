@@ -114,7 +114,10 @@ class Mesure:
         return str(self)
     
     def __str__(self):
-        return f"{self.station.name} le {self.date}, WIND heading : {self.wind_heading}°, mean : {self.wind_speed_avg} km/h, max : {self.wind_speed_max} km/h"
+        st_name = "None"
+        if self.station is not None:
+            st_name = self.station.name
+        return f"{st_name} le {self.date}, WIND heading : {self.wind_heading}°, mean : {self.wind_speed_avg} km/h, max : {self.wind_speed_max} km/h"
     
     def __eq__(self, other):
         
