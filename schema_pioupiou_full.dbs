@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="Sqlite" id="Project-bed" database="Sqlite" >
+	<schema name="Default" >
+		<table name="location" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="latitude" type="real" length="0" decimal="6" jt="8" >
+				<comment><![CDATA[Last known Latitude of the station, or null]]></comment>
+			</column>
+			<column name="longitude" type="real" length="0" decimal="6" jt="8" >
+				<comment><![CDATA[Last known Longitude of the station, or null]]></comment>
+			</column>
+			<column name="last_location_update" prior="date" type="date" jt="91" >
+				<comment><![CDATA[Date of last location update (succeed or failed), or null]]></comment>
+			</column>
+			<column name="success" type="boolean" jt="-7" >
+				<comment><![CDATA[Is the last known position still valid ? true or false]]></comment>
+			</column>
+			<column name="station" type="integer" jt="4" />
+			<index name="Pk_location_id" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<index name="Unq_location_station" unique="UNIQUE_KEY" >
+				<column name="station" />
+			</index>
+			<fk name="Fk_location" to_schema="Default" to_table="measurements" >
+				<fk_column name="id" pk="location" />
+			</fk>
+		</table>
+		<table name="measurements" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="measure_date" prior="date" type="date" jt="91" >
+				<comment><![CDATA[Date of last measurements, or null]]></comment>
+			</column>
+			<column name="wind_heading" type="double" length="0" decimal="2" jt="8" >
+				<comment><![CDATA[Wind heading, or null (0° means the wind is blowing from North to Sud) - degree]]></comment>
+			</column>
+			<column name="wind_speed_avg" type="double" length="0" decimal="2" jt="8" >
+				<comment><![CDATA[Wind speed average, or null (over the last 4 minutes before measurements.date, divide by 1.852 for converting to knots)
+KM/H]]></comment>
+			</column>
+			<column name="wind_speed_max" type="double" length="0" decimal="2" jt="8" >
+				<comment><![CDATA[Minimum wind speed, or null (over the last 4 minutes before measurements.date, divide by 1.852 for converting to knots)
+KM/H]]></comment>
+			</column>
+			<column name="wind_speed_min" type="double" length="0" decimal="2" jt="8" >
+				<comment><![CDATA[Maximum wind speed, or null (over the last 4 minutes before measurements.date, divide by 1.852 for converting to knots)
+KM/H]]></comment>
+			</column>
+			<column name="location" type="integer" jt="4" />
+			<index name="Pk_measurements_id" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<index name="Unq_measurements_location" unique="UNIQUE_KEY" >
+				<column name="location" />
+			</index>
+		</table>
+		<table name="rating" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="upvotes" type="integer" jt="4" >
+				<comment><![CDATA[Station rating : Positive votes count]]></comment>
+			</column>
+			<column name="downvotes" type="integer" jt="4" >
+				<comment><![CDATA[Station rating : Negative votes count]]></comment>
+			</column>
+			<column name="station" type="integer" jt="4" />
+			<index name="Pk_rating_id" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<index name="Unq_rating_station" unique="UNIQUE_KEY" >
+				<column name="station" />
+			</index>
+		</table>
+		<table name="station" >
+			<column name="id" type="integer" jt="4" mandatory="y" >
+				<comment><![CDATA[Numeric ID of the station]]></comment>
+			</column>
+			<column name="name" type="varchar" length="100" jt="12" mandatory="y" >
+				<comment><![CDATA[Name of the station]]></comment>
+			</column>
+			<column name="description" type="varchar" length="255" jt="12" >
+				<comment><![CDATA[Description of the station, or null]]></comment>
+			</column>
+			<column name="picture" type="varchar" length="255" jt="12" >
+				<comment><![CDATA[URL of station's picture, or null]]></comment>
+			</column>
+			<column name="last_update_date" prior="date" type="date" jt="91" >
+				<comment><![CDATA[Date of last metadata update, or null]]></comment>
+			</column>
+			<index name="Pk_station_id" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="Fk_station" to_schema="Default" to_table="rating" >
+				<fk_column name="id" pk="station" />
+			</fk>
+			<fk name="Fk_station_0" to_schema="Default" to_table="location" >
+				<fk_column name="id" pk="station" />
+			</fk>
+			<fk name="Fk_station_1" to_schema="Default" to_table="status" >
+				<fk_column name="id" pk="station" />
+			</fk>
+		</table>
+		<table name="status" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="date" type="date" jt="91" >
+				<comment><![CDATA[Date of the last contact with the station, or null]]></comment>
+			</column>
+			<column name="snr" type="double" length="0" decimal="2" jt="8" >
+				<comment><![CDATA[Signal-to-Noise ratio = radio link quality, or null (<10 : bad, >20: very good)
+dB]]></comment>
+			</column>
+			<column name="state" type="varchar" length="10" jt="12" >
+				<comment><![CDATA[Station power state, "on", "off" or null. "off" means that the station have been shutdown by pressing it's power switch.]]></comment>
+			</column>
+			<column name="station" type="integer" jt="4" />
+			<index name="Pk_status_id" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<index name="Unq_status_station" unique="UNIQUE_KEY" >
+				<column name="station" />
+			</index>
+		</table>
+	</schema>
+	<connector name="Sqlite" database="Sqlite" driver_class="org.sqlite.JDBC" driver_jar="sqlite-jdbc-3.36.0.3.jar" driver_desc="Standard" host="localhost" port="7210" instance="C:/Users/User/WORK/wokspace-simplon3/projet_sql/schema_pioupiou.db" />
+	<layout name="schema_piou_piou" id="Layout-333" show_relation="columns" >
+		<entity schema="Default" name="location" color="C1D8EE" x="304" y="288" />
+		<entity schema="Default" name="measurements" color="C1D8EE" x="608" y="240" />
+		<entity schema="Default" name="rating" color="3986C1" x="64" y="112" />
+		<entity schema="Default" name="station" color="C1D8EE" x="48" y="288" />
+		<entity schema="Default" name="status" color="C1D8EE" x="80" y="480" />
+		<callout x="96" y="48" pointer="Round" >
+			<comment><![CDATA[Create new tables by right-clicking the layout (diagram).
+Create multiple layouts with the same or different tables.
+Saving the model to file will save also the layouts and schema structure.]]></comment>
+		</callout>
+	</layout>
+</project>

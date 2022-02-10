@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="schema_pioupiou" id="Project-2619" database="Sqlite" >
+	<schema name="Default" >
+		<table name="measurements" prior="Tbl" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="measure_date" type="date" jt="91" >
+				<comment><![CDATA[Date of last measurements, or null]]></comment>
+			</column>
+			<column name="win_heading" type="double" length="0" decimal="2" jt="8" >
+				<comment><![CDATA[Wind heading, or null (0° means the wind is blowing from North to Sud) - degree]]></comment>
+			</column>
+			<column name="wind_speed_avg" type="double" length="0" decimal="2" jt="8" >
+				<comment><![CDATA[Wind speed average, or null (over the last 4 minutes before measurements.date, divide by 1.852 for converting to knots)
+KM/H]]></comment>
+			</column>
+			<column name="wind_speed_max" type="double" length="0" decimal="2" jt="8" >
+				<comment><![CDATA[Minimum wind speed, or null (over the last 4 minutes before measurements.date, divide by 1.852 for converting to knots)
+KM/H]]></comment>
+			</column>
+			<column name="station" type="integer" jt="4" />
+			<index name="Pk_measurements_id" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<index name="Unq_measurements_station" unique="UNIQUE_KEY" >
+				<column name="station" />
+			</index>
+		</table>
+		<table name="station" prior="Tbl" >
+			<comment><![CDATA[Name of the station]]></comment>
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="100" jt="12" />
+			<column name="latitude" type="real" length="0" decimal="6" jt="8" >
+				<comment><![CDATA[Last known Latitude of the station, or null]]></comment>
+			</column>
+			<column name="longitude" type="real" length="0" decimal="6" jt="8" >
+				<comment><![CDATA[Last known Longitude of the station, or null]]></comment>
+			</column>
+			<index name="Pk_station_id" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="Fk_station" to_schema="Default" to_table="measurements" >
+				<fk_column name="id" pk="station" />
+			</fk>
+		</table>
+	</schema>
+	<layout name="Default Layout" id="Layout-f6e" show_relation="columns" >
+		<entity schema="Default" name="measurements" color="C1D8EE" x="496" y="304" />
+		<entity schema="Default" name="station" color="C1D8EE" x="304" y="320" />
+		<callout x="48" y="48" pointer="Round" >
+			<comment><![CDATA[DbSchema is disconnected from the database.
+New designed tables will be saved to project file and later can be create in any database.
+Right-click the layout to create new tables. Drop this callout from its context menu.]]></comment>
+		</callout>
+	</layout>
+</project>
